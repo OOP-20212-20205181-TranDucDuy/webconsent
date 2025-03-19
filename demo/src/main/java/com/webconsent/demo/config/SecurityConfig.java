@@ -30,7 +30,7 @@ public class SecurityConfig {
             @Override
             public void addCorsMappings(CorsRegistry registry) {
                 registry.addMapping("/**") // Áp dụng cho tất cả API
-                        .allowedOrigins("http://localhost:5173","http://localhost:3000") // Cho phép React frontend gọi API
+                        .allowedOrigins("http://localhost:5173","http://localhost:3000","http://10.14.171.25") // Cho phép React frontend gọi API
                         .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
                         .allowedHeaders("*")
                         .allowCredentials(true);

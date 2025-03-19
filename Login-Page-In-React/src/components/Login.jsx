@@ -6,7 +6,7 @@ import GoogleSvg from "../assets/icons8-google.svg";
 import { FaEye, FaEyeSlash } from "react-icons/fa6";
 export const path = "http://10.14.171.25:8004/duy/testcatalog1/testoauh2";
 export const client_id = "E9GIlesUNP9L8Ttmc5sab2atC5gUavIe";
-export const baseUrl = "http://localhost:8080"
+export const baseUrl = "http://localhost:8989"
 const Login = () => {
   const [searchParams] = useSearchParams();
   const [showPassword, setShowPassword] = useState(false);
