@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState , useEffect} from "react";
 import { useNavigate } from "react-router-dom";
 import { FaEye, FaEyeSlash } from "react-icons/fa6";
 import { Container, Box, Typography, TextField, Button, IconButton, Paper, InputAdornment } from "@mui/material";
@@ -15,7 +15,18 @@ const Login = () => {
   const [credentials, setCredentials] = useState({ username: "", password: "" });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-
+  const [path, setPath] = useState("");
+  const [clientId , setClientId] = useState("");
+  useEffect(() => {
+    const queryParams = new URLSearchParams(window.location.search);
+    const pathFromUrl = queryParams.get("path") != null ? queryParams.get("path") : PATH;
+    const clientIdFromUrl = queryParams.get("clientIdFromUrl") != null ? queryParams.get("clientIdFromUrl") : CLIENT_ID;
+    if (pathFromUrl) {
+      setPath(pathFromUrl);
+      setClientId(clientIdFromUrl);
+    }
+  }, []);
+  
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -28,7 +39,7 @@ const Login = () => {
     setLoading(true);
 
     try {
-      const response = await fetch(`${BASE_URL}/auth/login?path=${PATH}&clientId=${CLIENT_ID}`, {
+      const response = await fetch(`${BASE_URL}/auth/login?path=${path}&clientId=${clientId}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(credentials),

@@ -1,7 +1,9 @@
 package com.webconsent.demo.service;
 
 import com.webconsent.demo.dto.RegisterRequest;
+import com.webconsent.demo.entity.Consumer;
 import com.webconsent.demo.entity.LdapConfig;
+import com.webconsent.demo.entity.Site;
 import com.webconsent.demo.entity.User;
 import com.webconsent.demo.repository.ConsumerRepository;
 import com.webconsent.demo.repository.LdapConfigRepository;
@@ -23,20 +25,24 @@ public class UserService {
     private final ConsumerRepository consumerRepository;
 
     public void registerUser(RegisterRequest request){
-        LdapConfig ldapConfig = ldapConfigRepository.findById(request.getLdapConfigId()).orElseThrow(
-                () -> new RuntimeException("Ldap config not found")
+        Consumer consumer = consumerRepository.findByOauthClientId(request.getConsumerId()).orElseThrow(
+                () -> new RuntimeException("Consumer not found")
         );
+        LdapConfig config = ldapConfigRepository.findByUrl(consumer.getSite().getLdap_url())
+                .orElseGet(() -> {
+                    Site site = consumer.getSite();
+                    return ldapService.parseLdapConfigFromSite(site);
+                });
+
         User user = User.builder()
                 .username(request.getUsername())
                 .email(request.getEmail())
                 .password(request.getPassword())
-                .ldapConfig(ldapConfig)
-                .consumer(consumerRepository.findById(request.getConsumerId()).orElseThrow(
-                        () -> new RuntimeException("Consumer not found")
-                ))
+                .ldapConfig(config)
+                .consumer(consumer)
                 .build();
         userRepository.save(user);
-        ldapService.syncUserToLdap(user, ldapConfig);
+        ldapService.syncUserToLdap(user, config);
     }
 
 }

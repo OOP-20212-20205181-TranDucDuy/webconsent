@@ -78,6 +78,7 @@ public class LdapService {
                     Site site = user.getConsumer().getSite();
                     return parseLdapConfigFromSite(site);
                 });
+        user.setLdapConfig(config);
         LdapTemplate ldapTemplate = createLdapTemplate(config);
         String searchFilter = config.getUserSearchFilter().replace("{0}", request.getUsername());
         List<OauthTokenLogDto> oauthTokenLogDtos = getOauth2LogsByUserId(consumer.getKongConsumerId());
@@ -99,7 +100,7 @@ public class LdapService {
     }
 
 
-    private LdapConfig parseLdapConfigFromSite(Site site) {
+    public LdapConfig parseLdapConfigFromSite(Site site) {
         String ldapCredential = site.getLdap_credential();
         String[] parts = ldapCredential != null ? ldapCredential.split("&", 2) : new String[]{"", ""};
         String adminDn = parts.length > 0 ? parts[0] : "";
