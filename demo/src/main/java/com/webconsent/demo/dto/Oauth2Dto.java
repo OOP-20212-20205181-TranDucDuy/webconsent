@@ -5,6 +5,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
+
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -16,4 +18,5 @@ public class Oauth2Dto {
     private String authorizationUserid;
     private String provisionKey;
     private String path;
+    List<OauthTokenLogDto> oauthTokenLogDtos;
 }

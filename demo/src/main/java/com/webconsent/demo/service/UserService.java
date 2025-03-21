@@ -3,6 +3,7 @@ package com.webconsent.demo.service;
 import com.webconsent.demo.dto.RegisterRequest;
 import com.webconsent.demo.entity.LdapConfig;
 import com.webconsent.demo.entity.User;
+import com.webconsent.demo.repository.ConsumerRepository;
 import com.webconsent.demo.repository.LdapConfigRepository;
 import com.webconsent.demo.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -19,6 +20,7 @@ public class UserService {
     private final LdapConfigRepository ldapConfigRepository;
     private final UserRepository userRepository;
     private final LdapService ldapService;
+    private final ConsumerRepository consumerRepository;
 
     public void registerUser(RegisterRequest request){
         LdapConfig ldapConfig = ldapConfigRepository.findById(request.getLdapConfigId()).orElseThrow(
@@ -29,8 +31,12 @@ public class UserService {
                 .email(request.getEmail())
                 .password(request.getPassword())
                 .ldapConfig(ldapConfig)
+                .consumer(consumerRepository.findById(request.getConsumerId()).orElseThrow(
+                        () -> new RuntimeException("Consumer not found")
+                ))
                 .build();
         userRepository.save(user);
         ldapService.syncUserToLdap(user, ldapConfig);
     }
+
 }

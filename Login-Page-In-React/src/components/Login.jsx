@@ -1,25 +1,26 @@
 import React, { useState } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
+import { FaEye, FaEyeSlash } from "react-icons/fa6";
+import { Container, Box, Typography, TextField, Button, IconButton, Paper, InputAdornment } from "@mui/material";
 import Image from "../assets/image.png";
 import Logo from "../assets/logo.png";
-import GoogleSvg from "../assets/icons8-google.svg";
-import { FaEye, FaEyeSlash } from "react-icons/fa6";
-export const path = "http://10.14.171.25:8004/duy/testcatalog1/testoauh2";
-export const client_id = "E9GIlesUNP9L8Ttmc5sab2atC5gUavIe";
-export const baseUrl = "http://localhost:8989"
+
+export const PATH = "http://10.14.171.25:8004/duy/testcatalog1/testoauh2";
+export const CLIENT_ID = "E9GIlesUNP9L8Ttmc5sab2atC5gUavIe";
+export const BASE_URL = "http://localhost:8989";
+
 const Login = () => {
-  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
+  const [credentials, setCredentials] = useState({ username: "", password: "" });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const navigate = useNavigate();
 
-  // Lấy "path" từ query string (?path=...) hoặc mặc định là "auth"
-  const apiPath = searchParams.get("path") || "";
-  const clientId = searchParams.get("clientId") || "";
-  const backendUrl = `${baseUrl}/auth/login?path=${path}&clientId=${client_id}`; // 💡 Gửi path như request param
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setCredentials((prev) => ({ ...prev, [name]: value }));
+  };
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -27,30 +28,23 @@ const Login = () => {
     setLoading(true);
 
     try {
-      const response = await fetch(backendUrl, {
+      const response = await fetch(`${BASE_URL}/auth/login?path=${PATH}&clientId=${CLIENT_ID}`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ username, password }),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(credentials),
       });
 
       const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || "Login failed");
-      }
+      if (!response.ok) throw new Error(data.message || "Login failed");
 
       localStorage.setItem("accessToken", data.accessToken);
       localStorage.setItem("clientId", data.clientId);
       localStorage.setItem("clientSecret", data.clientSecret);
       localStorage.setItem("authorizationUserid", data.authorizationUserid);
       localStorage.setItem("provisionKey", data.provisionKey);
-      localStorage.setItem("path", data.path)
-
+      localStorage.setItem("path", data.path);
+      localStorage.setItem("oauthTokenLogDtos", JSON.stringify(data.oauthTokenLogDtos));
       alert("Login successful!");
-
-      // Điều hướng đến trang authorize sau khi đăng nhập thành công
       navigate("/authorize");
     } catch (err) {
       setError(err.message);
@@ -60,63 +54,73 @@ const Login = () => {
   };
 
   return (
-    <div className="login-main">
-      <div className="login-left">
-        <img src={Image} alt="" />
-      </div>
-      <div className="login-right">
-        <div className="login-right-container">
-          <div className="login-logo">
-            <img src={Logo} alt="" />
-          </div>
-          <div className="login-center">
-            <h2>Welcome back!</h2>
-            <p>Please enter your details</p>
-
-            {error && <p className="error-message">{error}</p>}
-
-            <form onSubmit={handleLogin}>
-              <input
-                type="text"
-                placeholder="Username"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                required
-              />
-
-              <div className="pass-input-div">
-                <input
-                  type={showPassword ? "text" : "password"}
-                  placeholder="Password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                />
-                {showPassword ? (
-                  <FaEyeSlash onClick={() => setShowPassword(!showPassword)} />
-                ) : (
-                  <FaEye onClick={() => setShowPassword(!showPassword)} />
-                )}
-              </div>
-
-              <div className="login-center-buttons">
-                <button type="submit" disabled={loading}>
-                  {loading ? "Logging in..." : "Log In"}
-                </button>
-                <button type="button">
-                  <img src={GoogleSvg} alt="" />
-                  Log In with Google
-                </button>
-              </div>
-            </form>
-          </div>
-
-          <p className="login-bottom-p">
-            Don't have an account? <a href="#">Sign Up</a>
-          </p>
-        </div>
-      </div>
-    </div>
+    <Container maxWidth="md">
+      <Paper elevation={3} sx={{ display: "flex", overflow: "hidden", mt: 8, borderRadius: 2 }}>
+        <Box
+          sx={{
+            display: { xs: "none", md: "block" },
+            width: "50%",
+            backgroundImage: `url(${Image})`,
+            backgroundSize: "cover",
+            backgroundPosition: "center",
+          }}
+        />
+        <Box sx={{ p: 4, width: { xs: "100%", md: "50%" }, display: "flex", flexDirection: "column", alignItems: "center" }}>
+          <img src={Logo} alt="Logo" style={{ width: "80px", marginBottom: "16px" }} />
+          <Typography variant="h5" gutterBottom fontWeight="bold">
+            Welcome Back!
+          </Typography>
+          <Typography variant="body2" color="textSecondary" gutterBottom>
+            Sign in with your credentials or OAuth2
+          </Typography>
+          {error && <Typography color="error">{error}</Typography>}
+          <Box component="form" onSubmit={handleLogin} sx={{ width: "100%", mt: 2 }}>
+            <TextField
+              fullWidth
+              label="Username"
+              name="username"
+              value={credentials.username}
+              onChange={handleChange}
+              margin="normal"
+              required
+              variant="outlined"
+              sx={{ backgroundColor: "white", borderRadius: "8px" }}
+            />
+            <TextField
+              fullWidth
+              label="Password"
+              type={showPassword ? "text" : "password"}
+              name="password"
+              value={credentials.password}
+              onChange={handleChange}
+              margin="normal"
+              required
+              variant="outlined"
+              sx={{ backgroundColor: "white", borderRadius: "8px" }}
+              InputProps={{
+                endAdornment: (
+                  <InputAdornment position="end">
+                    <IconButton onClick={() => setShowPassword(!showPassword)}>
+                      {showPassword ? <FaEyeSlash /> : <FaEye />}
+                    </IconButton>
+                  </InputAdornment>
+                ),
+              }}
+            />
+            <Button
+              fullWidth
+              type="submit"
+              variant="contained"
+              color="primary"
+              disabled={loading}
+              sx={{ mt: 2, borderRadius: "8px", fontWeight: "bold", fontSize: "16px" }}
+            >
+              {loading ? "Logging in..." : "Log In"}
+            </Button>
+          </Box>
+        </Box>
+      </Paper>
+    </Container>
   );
 };
 

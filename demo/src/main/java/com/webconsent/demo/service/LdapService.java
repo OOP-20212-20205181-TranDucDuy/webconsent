@@ -1,12 +1,8 @@
 package com.webconsent.demo.service;
 
-import com.google.gson.Gson;
-import com.google.gson.JsonObject;
+import com.google.gson.*;
 import com.webconsent.demo.dto.*;
-import com.webconsent.demo.entity.Consumer;
-import com.webconsent.demo.entity.LdapConfig;
-import com.webconsent.demo.entity.PublishRestApi;
-import com.webconsent.demo.entity.User;
+import com.webconsent.demo.entity.*;
 import com.webconsent.demo.repository.ConsumerRepository;
 import com.webconsent.demo.repository.PublishRestApiRepository;
 import com.webconsent.demo.repository.UserRepository;
@@ -25,6 +21,8 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.web.servlet.view.RedirectView;
 
 import javax.naming.Name;
+import java.time.Instant;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -37,6 +35,7 @@ public class LdapService {
     private final JwtService jwtService;
     private final ConsumerRepository consumerRepository;
     private final PublishRestApiRepository publishRestApiRepository;
+    private final static String KONG_ADMIN_URL = "http://10.14.171.25:8003";
     @Transactional
     public void createLdapConfig(LdapRequest request) {
         LdapConfig ldapConfig = LdapConfig.builder()
@@ -74,9 +73,14 @@ public class LdapService {
         Consumer consumer = consumerRepository.findByOauthClientId(clientId).orElseThrow(
                 () -> new RuntimeException("Consumer not found")
         );
-        LdapConfig config = user.getLdapConfig();
+        LdapConfig config = ldapConfigRepository.findByUrl(user.getConsumer().getSite().getLdap_url())
+                .orElseGet(() -> {
+                    Site site = user.getConsumer().getSite();
+                    return parseLdapConfigFromSite(site);
+                });
         LdapTemplate ldapTemplate = createLdapTemplate(config);
         String searchFilter = config.getUserSearchFilter().replace("{0}", request.getUsername());
+        List<OauthTokenLogDto> oauthTokenLogDtos = getOauth2LogsByUserId(consumer.getKongConsumerId());
         if(ldapTemplate.authenticate("", searchFilter, request.getPassword())){
             String accessToken = jwtService.generate(String.valueOf(user.getId()), "ACCESS");
             PublishRestApiDto publishRestApi = getPublishRestApi(path);
@@ -87,10 +91,30 @@ public class LdapService {
                     .provisionKey(publishRestApi.getOauthProvisionKey())
                     .authorizationUserid(consumer.getKongConsumerId())
                     .path(path)
+                    .oauthTokenLogDtos(oauthTokenLogDtos)
                     .build();
         } else {
             throw new RuntimeException("Invalid credentials");
         }
+    }
+
+
+    private LdapConfig parseLdapConfigFromSite(Site site) {
+        String ldapCredential = site.getLdap_credential();
+        String[] parts = ldapCredential != null ? ldapCredential.split("&", 2) : new String[]{"", ""};
+        String adminDn = parts.length > 0 ? parts[0] : "";
+        String adminPassword = parts.length > 1 ? parts[1] : "";
+
+
+        LdapConfig config = LdapConfig.builder()
+                .url(site.getLdap_url())
+                .baseDn(site.getLdap_credential())
+                .adminDn(adminDn)
+                .adminPassword(adminPassword)
+                .userSearchFilter("(uid={0})")
+                .build();
+        ldapConfigRepository.save(config);
+        return config;
     }
 
     public void syncUserToLdap(User user, LdapConfig ldapConfig) {
@@ -194,4 +218,51 @@ public class LdapService {
         }
 
     }
+
+    public List<OauthTokenLogDto> getOauth2LogsByUserId(String authenticatedUserid) {
+        RestTemplate restTemplate = new RestTemplate();
+        HttpHeaders headers = new HttpHeaders();
+        headers.setAccept(List.of(MediaType.APPLICATION_JSON));
+
+        HttpEntity<String> entity = new HttpEntity<>(headers);
+
+        try {
+            String url = KONG_ADMIN_URL + "/oauth2_tokens";
+            ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.GET, entity, String.class);
+
+            JsonObject jsonObject = JsonParser.parseString(response.getBody()).getAsJsonObject();
+            JsonArray dataArray = jsonObject.getAsJsonArray("data");
+
+            List<OauthTokenLogDto> tokenLogs = new ArrayList<>();
+
+            for (JsonElement element : dataArray) {
+                JsonObject obj = element.getAsJsonObject();
+                String userId = obj.has("authenticated_userid") && !obj.get("authenticated_userid").isJsonNull()
+                        ? obj.get("authenticated_userid").getAsString()
+                        : null;
+
+                if (authenticatedUserid.equals(userId)) {
+                    OauthTokenLogDto token = new OauthTokenLogDto();
+                    token.setId(obj.get("id").getAsString());
+                    token.setAccessToken(obj.get("access_token").getAsString());
+                    token.setRefreshToken(obj.has("refresh_token") && !obj.get("refresh_token").isJsonNull()
+                            ? obj.get("refresh_token").getAsString()
+                            : null);
+                    token.setScope(obj.has("scope") && !obj.get("scope").isJsonNull()
+                            ? obj.get("scope").getAsString()
+                            : null);
+                    token.setCreatedAt((obj.get("created_at").getAsLong()));
+                    token.setExpiresIn(obj.get("expires_in").getAsLong());
+                    token.setTtl(obj.get("ttl").getAsLong());
+                    token.setAuthenticatedUserid(userId);
+                    tokenLogs.add(token);
+                }
+            }
+
+            return tokenLogs;
+        } catch (Exception e) {
+            throw new RuntimeException("Error retrieving oauth2 logs from Kong Admin API", e);
+        }
+    }
+
 }

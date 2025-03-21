@@ -28,4 +28,10 @@ public class Consumer {
     @Column(name = "oauth_client_secret")
     private String oauthClientSecret;
 
+    @ManyToOne
+    @JoinColumn(name = "site_id")
+    private Site site;
+
+    @Column(name = "site_id", insertable = false, updatable = false)
+    private UUID siteId;
 }

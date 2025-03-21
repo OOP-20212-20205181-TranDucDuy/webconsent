@@ -3,6 +3,8 @@ package com.webconsent.demo.entity;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.util.UUID;
+
 
 @Entity
 @Table(name = "users")
@@ -29,4 +31,11 @@ public class User {
     @ManyToOne
     @JoinColumn(name = "ldap_config_id", nullable = false)
     private LdapConfig ldapConfig;
+
+    @ManyToOne
+    @JoinColumn(name = "consumer_id", nullable = false)
+    private Consumer consumer;
+
+    @Column(name = "consumer_id", insertable = false, updatable = false)
+    private UUID consumerId;
 }

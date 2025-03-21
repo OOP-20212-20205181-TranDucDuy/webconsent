@@ -31,7 +31,11 @@ public class PublishRestApi {
     @Column(name = "kong_service_id")
     private UUID kongServiceId;
 
-    @Column(name = "product_id")
+    @ManyToOne
+    @JoinColumn(name = "product_id")
+    private PublishedProduct product;
+
+    @Column(name = "product_id" , insertable = false, updatable = false)
     private UUID productId;
 
     @Column(name = "api_id")

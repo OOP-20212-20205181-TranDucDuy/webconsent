@@ -5,6 +5,7 @@ import com.webconsent.demo.service.JwtService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -30,7 +31,7 @@ public class SecurityConfig {
             @Override
             public void addCorsMappings(CorsRegistry registry) {
                 registry.addMapping("/**") // Áp dụng cho tất cả API
-                        .allowedOrigins("http://localhost:5173","http://localhost:3000","http://10.14.171.25") // Cho phép React frontend gọi API
+                        .allowedOriginPatterns("*") //// Cho phép React frontend gọi API
                         .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
                         .allowedHeaders("*")
                         .allowCredentials(true);
@@ -51,7 +52,7 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                .cors().and()
+                .cors(Customizer.withDefaults())
                 .csrf().disable()
                 .authorizeHttpRequests(authorizeRequests ->
                         authorizeRequests
