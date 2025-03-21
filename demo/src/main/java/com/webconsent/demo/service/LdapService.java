@@ -252,10 +252,29 @@ public class LdapService {
                     token.setScope(obj.has("scope") && !obj.get("scope").isJsonNull()
                             ? obj.get("scope").getAsString()
                             : null);
-                    token.setCreatedAt((obj.get("created_at").getAsLong()));
+                    token.setCreatedAt(obj.get("created_at").getAsLong());
                     token.setExpiresIn(obj.get("expires_in").getAsLong());
                     token.setTtl(obj.get("ttl").getAsLong());
                     token.setAuthenticatedUserid(userId);
+
+                    if (obj.has("credential") && obj.get("credential").isJsonObject()) {
+                        String credentialId = obj.getAsJsonObject("credential").get("id").getAsString();
+                        // Gọi API để lấy thông tin credential từ Kong
+                        String credentialUrl = KONG_ADMIN_URL + "/oauth2/" + credentialId;
+                        try {
+                            ResponseEntity<String> credentialResponse = restTemplate.exchange(
+                                    credentialUrl, HttpMethod.GET, entity, String.class);
+                            JsonObject credentialJson = JsonParser.parseString(credentialResponse.getBody()).getAsJsonObject();
+
+                            token.setClientId(credentialJson.get("client_id").getAsString());
+                            token.setClientName(credentialJson.has("name") && !credentialJson.get("name").isJsonNull()
+                                    ? credentialJson.get("name").getAsString()
+                                    : null);
+                        } catch (Exception ce) {
+                            System.err.println("Cannot fetch credential info for ID: " + credentialId);
+                        }
+                    }
+
                     tokenLogs.add(token);
                 }
             }
@@ -265,5 +284,6 @@ public class LdapService {
             throw new RuntimeException("Error retrieving oauth2 logs from Kong Admin API", e);
         }
     }
+
 
 }

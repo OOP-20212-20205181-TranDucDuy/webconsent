@@ -12,4 +12,6 @@ public class OauthTokenLogDto {
     private String authenticatedUserid;
     private Long expiresIn;
     private Long ttl;
+    private String clientId;
+    private String clientName;
 }

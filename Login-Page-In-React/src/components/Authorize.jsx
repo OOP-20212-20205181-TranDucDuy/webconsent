@@ -133,12 +133,20 @@ const Authorize = () => {
             </Typography>
             {logs.map((log) => (
               <Box key={log.id} mb={2} p={2.5} border="1px solid #ccc" borderRadius={2} sx={{ fontSize: "1.05rem" }}>
-                <Typography variant="body2" mb={1}>🔑 Token: {log.accessToken}</Typography>
+                <Typography variant="body2" mb={1}>🔑 Access Token: {log.accessToken}</Typography>
+                {log.refreshToken && (
+                  <Typography variant="body2" mb={1}>🔄 Refresh Token: {log.refreshToken}</Typography>
+                )}
                 <Typography variant="body2" mb={1}>📅 Created At: {formatDate(log.createdAt)}</Typography>
                 <Typography variant="body2" mb={1}>🔐 Scope: {log.scope || "N/A"}</Typography>
-                <Typography variant="body2">⌛ Expires In: {log.expiresIn} seconds</Typography>
+                <Typography variant="body2" mb={1}>⌛ Expires In: {log.expiresIn} seconds</Typography>
+                <Typography variant="body2" mb={1}>🧭 TTL: {log.ttl} seconds</Typography>
+                <Typography variant="body2" mb={1}>🧑‍💻 Authenticated User ID: {log.authenticatedUserid || "N/A"}</Typography>
+                <Typography variant="body2" mb={1}>🆔 Client ID: {log.clientId || "N/A"}</Typography>
+                <Typography variant="body2" mb={1}>🏷️ Client Name: {log.clientName || "N/A"}</Typography>
               </Box>
             ))}
+
           </CardContent>
         </Card>
       )}
