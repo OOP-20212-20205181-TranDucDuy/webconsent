@@ -1,7 +1,16 @@
-import React, { useState , useEffect} from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { FaEye, FaEyeSlash } from "react-icons/fa6";
-import { Container, Box, Typography, TextField, Button, IconButton, Paper, InputAdornment } from "@mui/material";
+import {
+  Container,
+  Box,
+  Typography,
+  TextField,
+  Button,
+  IconButton,
+  Paper,
+  InputAdornment,
+} from "@mui/material";
 import Image from "../assets/image.png";
 import Logo from "../assets/logo.png";
 
@@ -16,7 +25,8 @@ const Login = () => {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [path, setPath] = useState("");
-  const [clientId , setClientId] = useState("");
+  const [clientId, setClientId] = useState("");
+
   useEffect(() => {
     const queryParams = new URLSearchParams(window.location.search);
     const pathFromUrl = queryParams.get("path") != null ? queryParams.get("path") : PATH;
@@ -26,7 +36,6 @@ const Login = () => {
       setClientId(clientIdFromUrl);
     }
   }, []);
-  
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -76,15 +85,24 @@ const Login = () => {
             backgroundPosition: "center",
           }}
         />
-        <Box sx={{ p: 4, width: { xs: "100%", md: "50%" }, display: "flex", flexDirection: "column", alignItems: "center" }}>
+        <Box
+          sx={{
+            p: 4,
+            width: { xs: "100%", md: "50%" },
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+          }}
+        >
           <img src={Logo} alt="Logo" style={{ width: "80px", marginBottom: "16px" }} />
-          <Typography variant="h5" gutterBottom fontWeight="bold">
+          <Typography variant="h4" gutterBottom fontWeight="bold">
             Welcome Back!
           </Typography>
-          <Typography variant="body2" color="textSecondary" gutterBottom>
+          <Typography variant="body1" color="textSecondary" gutterBottom fontSize="1.1rem">
             Sign in with your credentials or OAuth2
           </Typography>
           {error && <Typography color="error">{error}</Typography>}
+
           <Box component="form" onSubmit={handleLogin} sx={{ width: "100%", mt: 2 }}>
             <TextField
               fullWidth
@@ -96,6 +114,8 @@ const Login = () => {
               required
               variant="outlined"
               sx={{ backgroundColor: "white", borderRadius: "8px" }}
+              InputLabelProps={{ sx: { fontSize: "1.1rem" } }}
+              inputProps={{ style: { fontSize: "1.1rem" } }}
             />
             <TextField
               fullWidth
@@ -116,7 +136,9 @@ const Login = () => {
                     </IconButton>
                   </InputAdornment>
                 ),
+                style: { fontSize: "1.1rem" },
               }}
+              InputLabelProps={{ sx: { fontSize: "1.1rem" } }}
             />
             <Button
               fullWidth
@@ -124,7 +146,13 @@ const Login = () => {
               variant="contained"
               color="primary"
               disabled={loading}
-              sx={{ mt: 2, borderRadius: "8px", fontWeight: "bold", fontSize: "16px" }}
+              sx={{
+                mt: 2,
+                borderRadius: "8px",
+                fontWeight: "bold",
+                fontSize: "1.1rem",
+                py: 1.2,
+              }}
             >
               {loading ? "Logging in..." : "Log In"}
             </Button>
